@@ -56,7 +56,7 @@ echo " "
 VALID_USERS=()
 for USER in $(cat user.txt); do
   keys=$(curl -s /dev/stdout https://github.com/${USER}.keys)
-  if [[ ! -z "$keys" ]]; then
+  if [[ ! -z "$keys" ]] && [[ $keys != "Not Found" ]]; then
     VALID_USERS+=("$USER")
   else
     echo " - Skipping $USER, no SSH key found"
@@ -152,14 +152,14 @@ done
 echo ""
 echo " ------ Fetching certs from Let's Encrypt... ------ "
 echo ""
-for i in "${VALID_USERS[@]}"; do
-  sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL --domains $i.$DOMAIN
-done
+#for i in "${VALID_USERS[@]}"; do
+#  sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL --domains $i.$DOMAIN
+#done
 
 echo ""
 echo " ------ Creating last cert for bare $DOMAIN domain... ------ "
 echo ""
-sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL --domains $DOMAIN
+#sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL --domains $DOMAIN
 
 echo ""
 echo " ------ Configuring and Reloading apache... ------ "
@@ -178,7 +178,12 @@ echo "
 	color: white;
 	background: black;
 }
+pre {
+  width: 600px;
+  text-align: left;
+}
 </style>
+<center>
 <pre>
 ports for local <code>http</code> hosts:
 
@@ -209,7 +214,14 @@ more:
 
     https://github.com/mrjones-plip/mrjones-medic-scratch/tree/main/SshTunnelServer
 </pre>
+</center>
 " > /var/www/html/index.html
+
+if [ -f "./logo.svg" ]; then
+  cp ./logo.svg /var/www/html/
+  echo "<center><img src='./logo.svg'></center>" >> /var/www/html/index.html
+fi
+
 
 echo ""
 echo " ------ Here's the final mapping for http: ------ "

@@ -29,8 +29,9 @@ Development was done locally in lxd containers and then in Digital Ocean.
 ## Installing
 
 1. SSH as root to your Ubuntu server with public IP
-1. clone this repo with `git clone https://github.com/mrjones-plip/mrjones-medic-scratch`
-1. `cd` into repo and add create `user.txt` with your github users, one per line
+1. clone this repo with `git clone https://github.com/mrjones-plip/Keys-To-The-Tunnel.git`
+1. `cd Keys-To-The-Tunnel` and add create `user.txt` with your github users, one per line
+1. Optionally add a `logo.svg` to this directory if you want a logo to be shown on the final web page.
 1. run the install script with `./installTunnelServer.sh DOMAIN.COM EMAIL` replacing `DOMAIN.COM` with your real domain from step 3 in Requirements and replacing `EMAIL` with your email which will be used to agree to Let's Encrypt TOS and to get notifications about expiring certs.
 1. Send users the URL `DOMAIN.COM` which now lists how to use the server
 
