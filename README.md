@@ -12,9 +12,9 @@ The script will:
 1. Create an SSL certificate with Let's Encrypt for `GH-USERNAME.domain.com`
 1. Put instructions to use the SSH tunnels at `domain.com`
 
-This script is [hosted on GitHub](https://github.com/mrjones-plip/mrjones-medic-scratch/tree/main/SshTunnelServer).
-
 Keys-To-The-Tunnel is named after the fact that it uses SSH tunnels and the keys for this are pivital to why it exists: easily provision accounts from GH users based off their SSH keys.
+
+This script is [hosted on GitHub](https://github.com/mrjones-plip/mrjones-medic-scratch/tree/main/SshTunnelServer).
 
 ## Requirements
 
