@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# todo - check for Nth run to not create users that already exist etc
-# todo - maybe check for ubuntu?
-# todo - consolidate certbot calls with "-d DOMAIN" via SAN to reduce API calls?
-# todo - cache SSH keys on first validation to avoid subsequent API calls to GH to get keys again
-
 DOMAIN="$1"
 EMAIL="$2"
 
@@ -152,19 +147,25 @@ done
 echo ""
 echo " ------ Fetching certs from Let's Encrypt... ------ "
 echo ""
-#for i in "${VALID_USERS[@]}"; do
-#  sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL --domains $i.$DOMAIN
-#done
+for i in "${VALID_USERS[@]}"; do
+  FQDN="${i}.${DOMAIN}"
+  FQDN_ssl="${i}-ssl.${DOMAIN}"
+  sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL -d $DOMAINS $FQDN,$FQDN_ssl
+done
 
 echo ""
 echo " ------ Creating last cert for bare $DOMAIN domain... ------ "
 echo ""
-#sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL --domains $DOMAIN
+cp ./base.apache.conf /etc/apache2/sites-available/${DOMAIN}.conf
+rpl -q --encoding UTF-8  -q DOMAIN $DOMAIN /etc/apache2/sites-available/${DOMAIN}.conf
+rpl -q --encoding UTF-8  -q EMAIL $EMAIL /etc/apache2/sites-available/${DOMAIN}.conf
+sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL --domains $DOMAIN
 
 echo ""
 echo " ------ Configuring and Reloading apache... ------ "
 echo ""
 a2enmod proxy proxy_ajp proxy_http rewrite deflate headers proxy_balancer proxy_connect proxy_html ssl
+a2enconf security
 systemctl reload apache2
 MAPPING_NOSSL=$(grep -ri -m1 'ProxyPassReverse' /etc/apache2/sites-available/*|grep -v '\-ssl\.'|cut -d/ -f5,8|cut -d: -f1,3|awk 'BEGIN{FS=OFS=":"}{print $2 FS  $1}'|sed -r 's/.conf//g'|sed -r 's/:/\t/g'| awk '{print "\t" $0}')
 MAPPING_SSL=$(grep -ri -m1 'ProxyPassReverse' /etc/apache2/sites-available/*-ssl\.*|cut -d/ -f5,8|cut -d: -f1,3|awk 'BEGIN{FS=OFS=":"}{print $2 FS  $1}'|sed -r 's/.conf//g'|sed -r 's/:/\t/g'| awk '{print "\t" $0}')
@@ -184,6 +185,7 @@ pre {
 }
 </style>
 <center>
+<h1>Keys-To-The-Tunnel</h1>
 <pre>
 ports for local <code>http</code> hosts:
 
@@ -209,17 +211,14 @@ note:
     server. Conversely, it is configured to speak https on the https hosts.
     If you mix these up it will try and speak https to http (or vise versa)
     and it will fail.
-
-more:
-
-    https://github.com/mrjones-plip/mrjones-medic-scratch/tree/main/SshTunnelServer
 </pre>
+<p><a href="https://github.com/mrjones-plip/Keys-To-The-Tunnel">Keys-To-The-Tunnel @ GitHub</a>
 </center>
 " > /var/www/html/index.html
 
 if [ -f "./logo.svg" ]; then
   cp ./logo.svg /var/www/html/
-  echo "<center><img src='./logo.svg'></center>" >> /var/www/html/index.html
+  echo "<center><p><img src='./logo.svg'></p></center>" >> /var/www/html/index.html
 fi
 
 

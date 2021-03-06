@@ -73,13 +73,28 @@ If a user has a server running on `https://localhost:1234`, they would run:
 
 And then in a browser they could go to `https://alligator-lovely-ssl.tunnel.domain.com` - note extra `-ssl` in URL! This ensures the proxy server speaks SSL to your localhost.
 
+## todo
+
+- [ ] check for Nth run to not create users that already exist etc
+- [ ] maybe check for ubuntu?
+- [ ] consolidate certbot calls with "-d DOMAIN" via SAN to reduce API calls?
+- [ ] cache SSH keys on first validation to avoid subsequent API calls to GH to get keys again
+- [ ] add redirect for bare host 80 -> 443 with HSTS, maybe do vhost instead of using default site confs?
+- [ ] group more domains in SAN calls to void going over 50certs/day Let's Encrypt limit
+
 ## FAQ
+
+<details>
+    <summary> * **Q:** Wait...why not ansible, saltstack etc.?</summary>
+
+**A:** It started as "just a quick bash script" and then spiraled out of control from there.  Sorry!
+</details>
 
 * **Q:** Wait...why not ansible, saltstack etc.?
   
   **A:** It started as "just a quick bash script" and then spiraled out of control from there.  Sorry!
   
-
+  
 * **Q:** How come I'm getting 400 errors in Apache `The plain http request was sent to https port`?
   
   **A:** A user has created an SSH tunnel using the non-ssl vhost in the top group of port/URL sets which points to a web server running SSL on localhost.  Have them use the `-ssl` vhost listed in the bottom group of port/URL sets.  The reason is that the Apache vhost has a hard coded proxy of either `ProxyPass / http://localhost:PORT/` or `ProxyPass / https://localhost:PORT/`, it can't be both.  
