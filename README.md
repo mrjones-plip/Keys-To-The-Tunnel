@@ -4,14 +4,13 @@
 
 Keys-To-The-Tunnel is for when you have a lot of GitHub Developers who have added their SSH key to GitHub (e.g. [here's mine](https://github.com/mrjones-plip.keys)) and they also are doing local development of apps that they either need to share with others via the internet or they need valid TLS certificates to test with, or both!
 
-The script will:
-1. Create an SSH login on the host
-1. Lock this login to only allow SSH tunnels
-1. Create an Apache vhost for this login, with the `GH-USERNAME.domain.com`
-1. Create an SSL certificate with Let's Encrypt for `GH-USERNAME.domain.com`
-1. Put instructions to use the SSH tunnels at `domain.com`
-
-Keys-To-The-Tunnel is named after the fact that it uses SSH tunnels and the keys for this are pivotal to why it exists: easily provision accounts from GH users based off their SSH keys.
+Given a list of GH users and a `DOMAIN`, the script will give each user:
+1. A login 
+1. GH SSH key(s) put in `~/.ssh/authorized_keys`  
+1. Only allow SSH tunnels, no shells
+1. 2 vhosts for `http` and `https` localhost. GH name is a subdomain
+1. Valid SSL certificates from Let's Encrypt
+1. Instructions saved in `DOMAIN`
 
 This script is [hosted on GitHub](https://github.com/mrjones-plip/mrjones-medic-scratch/tree/main/SshTunnelServer).
 
@@ -84,4 +83,3 @@ And then in a browser they could go to `https://alligator-lovely-ssl.tunnel.doma
 - [ ] consolidate certbot calls with "-d DOMAIN" via SAN to reduce Let's Encrypt API calls?
 - [ ] cache SSH keys on first validation to avoid subsequent API calls to GH to get keys again
 - [ ] add redirect for bare host 80 -> 443 with HSTS, maybe do vhost instead of using default site confs?
-

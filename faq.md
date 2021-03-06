@@ -1,5 +1,8 @@
 # FAQ
 
+### Where does the name "Keys-To-The-Tunnel" come from?
+Keys-To-The-Tunnel is named after the fact that it uses SSH tunnels and the keys for this are pivotal to why it exists: easily provision accounts from GH users based off their SSH keys.
+
 ### Wait...why not ansible, saltstack etc.?
 It started as "just a quick bash script" and then spiraled out of control from there.  Sorry!
 
