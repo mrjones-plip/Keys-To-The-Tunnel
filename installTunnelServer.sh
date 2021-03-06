@@ -61,22 +61,19 @@ done
 echo " "
 echo "This script assumes:"
 echo " "
-echo " - you're root on Ubuntu"
-echo " - you have a wildcard DNS entry pointed to this server "
-echo "   for *.$DOMAIN"
-echo " - you want to set up a bunch of SSH tunnels to reverse  "
-echo "   proxy HTTPs and HTTP traffic"
+echo " - root on Ubuntu 20.04"
+echo " - DNS to this server for $DOMAIN"
+echo " - wildcard DNS entry to this server for *.$DOMAIN"
 echo " - are on on a machine dedicated to this purpose"
+echo " - you're in a good mood, ready for some SSH Tunnel awesomeness!"
 echo ""
-echo "Will create accounts for these GitHub users using their"
-echo "SSH keys on GitHub:"
+echo "Creating accounts for these GitHub users:"
 echo ""
 for i in "${VALID_USERS[@]}"; do
   echo " - $i"
 done
 echo ""
-echo "See https://github.com/mrjones-plip/mrjones-medic-scratch/tree/main/SshTunnelServer "
-echo "for more info"
+echo "See https://github.com/mrjones-plip/Keys-To-The-Tunnel for more info"
 echo ""
 echo "Press any key to continue or \"ctrl + c\" to exit"
 echo ""
@@ -89,8 +86,6 @@ echo ""
 apt -qq update&&apt -y -qqq dist-upgrade&&apt -qqq install -y  apache2  rpl&&systemctl --now enable apache2
 sudo snap install core; sudo snap refresh core
 sudo snap install --classic certbot
-mv /etc/apache2/sites-available/default-ssl.conf /etc/apache2/sites-available/000-default-ssl.conf
-a2ensite 000-default-ssl.conf
 
 echo ""
 echo " ------ Adding users... ------ "
@@ -150,7 +145,7 @@ echo ""
 for i in "${VALID_USERS[@]}"; do
   FQDN="${i}.${DOMAIN}"
   FQDN_ssl="${i}-ssl.${DOMAIN}"
-  sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL -d $DOMAINS $FQDN,$FQDN_ssl
+  sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL -d $FQDN,$FQDN_ssl
 done
 
 echo ""
@@ -159,11 +154,13 @@ echo ""
 cp ./base.apache.conf /etc/apache2/sites-available/${DOMAIN}.conf
 rpl -q --encoding UTF-8  -q DOMAIN $DOMAIN /etc/apache2/sites-available/${DOMAIN}.conf
 rpl -q --encoding UTF-8  -q EMAIL $EMAIL /etc/apache2/sites-available/${DOMAIN}.conf
+a2ensite ${DOMAIN}.conf default-ssl.conf
 sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL --domains $DOMAIN
 
 echo ""
 echo " ------ Configuring and Reloading apache... ------ "
 echo ""
+
 a2enmod proxy proxy_ajp proxy_http rewrite deflate headers proxy_balancer proxy_connect proxy_html ssl
 a2enconf security
 systemctl reload apache2
