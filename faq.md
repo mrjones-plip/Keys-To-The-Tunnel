@@ -33,7 +33,7 @@ Get a [personal GH token](https://github.com/settings/tokens), then call the [li
 
 
 ### Is there a rate limit to the number of Let's Encrypt certs I can request?
-Yes! It's [50/week](https://letsencrypt.org/docs/rate-limits/).  This script should really be using Subject Alternative Name (SAN) mechanism...hopefully soon! 
+Yes! It's [50/week](https://letsencrypt.org/docs/rate-limits/).  This script should really be using Subject Alternative Name (SAN) mechanism...[hopefully soon](https://github.com/mrjones-plip/Keys-To-The-Tunnel/issues/1)! 
 
 Until then, if you have less than 50 users you're onboarding per day, you're fine. Each user gets two domains and both are done in a single call with 2 SANs.
 
