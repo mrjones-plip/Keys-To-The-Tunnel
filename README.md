@@ -84,20 +84,19 @@ And then in a browser they could go to `https://alligator-lovely-ssl.tunnel.doma
 
 ## FAQ
 
-<details>
-    <summary> * **Q:** Wait...why not ansible, saltstack etc.?</summary>
+Click a question to see the answer:
 
-**A:** It started as "just a quick bash script" and then spiraled out of control from there.  Sorry!
+<details>
+    <summary> Wait...why not ansible, saltstack etc.?</summary>
+
+It started as "just a quick bash script" and then spiraled out of control from there.  Sorry!
 </details>
 
-* **Q:** Wait...why not ansible, saltstack etc.?
-  
-  **A:** It started as "just a quick bash script" and then spiraled out of control from there.  Sorry!
-  
-  
-* **Q:** How come I'm getting 400 errors in Apache `The plain http request was sent to https port`?
-  
-  **A:** A user has created an SSH tunnel using the non-ssl vhost in the top group of port/URL sets which points to a web server running SSL on localhost.  Have them use the `-ssl` vhost listed in the bottom group of port/URL sets.  The reason is that the Apache vhost has a hard coded proxy of either `ProxyPass / http://localhost:PORT/` or `ProxyPass / https://localhost:PORT/`, it can't be both.  
+<details>
+    <summary> How come I'm getting 400 errors in Apache `The plain http request was sent to https port`?</summary>
+
+A user has created an SSH tunnel using the non-ssl vhost in the top group of port/URL sets which points to a web server running SSL on localhost.  Have them use the `-ssl` vhost listed in the bottom group of port/URL sets.  The reason is that the Apache vhost has a hard coded proxy of either `ProxyPass / http://localhost:PORT/` or `ProxyPass / https://localhost:PORT/`, it can't be both.  
+</details>
   
 
 * **Q:** Why not use [ngrok](https://ngrok.com/), [pagekite](https://pagekite.net/), [localtunnel](https://github.com/localtunnel/localtunnel) or InsertSolutionHere instead?
