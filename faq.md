@@ -29,7 +29,7 @@ Edit the `user.txt` file to only have the one user.  They will lose their origin
 
 
 ### How do I get a list of all the users in my GitHub org?
-Get a [personal GitHub token](https://github.com/settings/tokens), then call the [list org members API](https://docs.github.com/en/rest/reference/orgs#list-organization-members) with this call `curl -H "Authorization: token  TOKEN" https://api.github.com/orgs/ORG/members>members.json`. Be sure to replace `TOKEN` and `ORG` with your token and your org.  The result will be a JSON file `members.json` which you can easily parse - consider using [`jq`](https://stedolan.github.io/jq/)!
+Get a [personal GitHub token](https://github.com/settings/tokens), then call the [list org members API](https://docs.github.com/en/rest/reference/orgs#list-organization-members) with this call `curl -H "Authorization: token  TOKEN" https://api.github.com/orgs/ORG/members>members.json`. Be sure to replace `TOKEN` and `ORG` with your token and your org.  The result will be a JSON file `members.json` which you can easily parse - consider using [`jq`](https://stedolan.github.io/jq/)! Otherwise, to get a `user.txt` file with just the users you should be able to run `grep login medic.members.json|cut -d\" -f4>user.txt`.
 
 
 ### Is there a rate limit to the number of Let's Encrypt certs I can request?
