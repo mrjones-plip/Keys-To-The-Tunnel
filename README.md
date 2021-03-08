@@ -4,11 +4,11 @@
 
 Keys-To-The-Tunnel is for when you have a lot of GitHub Developers who have added their SSH key to GitHub (e.g. [here's mine](https://github.com/mrjones-plip.keys)) and they also are doing local development of apps that they either need to share with others via the internet or they need valid TLS certificates to test with, or both!
 
-Given a list of GH users and a `DOMAIN`, the script will give each user:
+Given a list of GitHub users and a `DOMAIN`, the script will give each user:
 1. A login 
-1. GH SSH key(s) put in `~/.ssh/authorized_keys`  
+1. GitHub SSH key(s) put in `~/.ssh/authorized_keys`  
 1. Only allow SSH tunnels, no shells
-1. 2 vhosts for `http` and `https` localhost. GH name is a subdomain
+1. 2 vhosts for `http` and `https` localhost. GitHub name is a subdomain
 1. Valid SSL certificates from Let's Encrypt
 1. Instructions saved in `DOMAIN`
 
@@ -46,7 +46,7 @@ Users should go to the website you provisioned and use the list of port/URL comb
 
 The structure of the SSH call to set up the tunnel is:
 
-`ssh -T -R PORT-FROM-SERVER:127.0.0.1:PORT-ON-LOCALHOST GH-HANDLE@DOMAIN`
+`ssh -T -R PORT-FROM-SERVER:127.0.0.1:PORT-ON-LOCALHOST GITHUB-HANDLE@DOMAIN`
 
 ### Example 1
 
@@ -81,5 +81,5 @@ And then in a browser they could go to `https://alligator-lovely-ssl.tunnel.doma
 - [ ] check for Nth run to not create users that already exist etc
 - [ ] maybe check for Ubuntu?
 - [ ] consolidate certbot calls with "-d DOMAIN" via SAN to reduce Let's Encrypt API calls?
-- [ ] cache SSH keys on first validation to avoid subsequent API calls to GH to get keys again
+- [ ] cache SSH keys on first validation to avoid subsequent API calls to GitHub to get keys again
 - [ ] add redirect for bare host 80 -> 443 with HSTS, maybe do vhost instead of using default site confs?
