@@ -31,5 +31,8 @@ echo "Connected to SSH tunnel server"
 echo
 printf "%s (%s %s %s)\n" "$DISTRIB_DESCRIPTION" "$(uname -o)" "$(uname -r)" "$(uname -m)"
 echo
+echo -e "HTTP   -->       \033[4;32mhttp://${USER}.cht-tunnel.plip.com\033[0m"
+echo -e "HTTPS  -->  \033[4;32mhttps://${USER}-ssl.cht-tunnel.plip.com\033[0m"
+echo
 echo "Press 'ctrl + c' to exit"
 echo
