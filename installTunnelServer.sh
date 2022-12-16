@@ -50,12 +50,13 @@ echo " ------ Verifying users who have SSH keys on GH, this may take a while... 
 echo " "
 VALID_USERS=()
 for USER in $(cat user.txt); do
-  keys=$(curl -s /dev/stdout https://github.com/${USER}.keys)
-  if [[ ! -z "$keys" ]] && [[ $keys != "Not Found" ]]; then
+# todo - uncomment for release
+#  keys=$(curl -s /dev/stdout https://github.com/${USER}.keys)
+#  if [[ ! -z "$keys" ]] && [[ $keys != "Not Found" ]]; then
     VALID_USERS+=("$USER")
-  else
-    echo " - Skipping $USER, no SSH key found"
-  fi
+#  else
+#    echo " - Skipping $USER, no SSH key found"
+#  fi
 done
 
 echo " "
@@ -83,9 +84,34 @@ read -n1 -s
 echo ""
 echo " ------ Updating OS and installing required software, this might take a while... ------ "
 echo ""
-apt -qq update&&apt -y -qqq dist-upgrade&&apt -qqq install -y  apache2  rpl&&systemctl --now enable apache2
-sudo snap install core; sudo snap refresh core
-sudo snap install --classic certbot
+apt -qq update&&apt -y -qqq dist-upgrade
+if ! command -v "caddy" &>/dev/null; then
+  sudo apt -qqq install -y debian-keyring debian-archive-keyring apt-transport-https libnss3-tools  snapd python3 python3-pip
+  python3 -m pip install requests
+  sudo snap install core
+  sudo snap refresh core
+  sudo snap install --classic certbot
+  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+  sudo apt -qqq update
+  sudo apt -qqq install caddy
+  systemctl start caddy
+  systemctl enable caddy
+  echo "import sites-enabled/*" >> /etc/caddy/Caddyfile
+  mkdir /etc/caddy/sites-enabled
+  mkdir -p /var/www/html
+  mkdir -p /etc/letsencrypt/
+  curl -so /etc/letsencrypt/acme-dns-auth.py https://raw.githubusercontent.com/joohoi/acme-dns-certbot-joohoi/master/acme-dns-auth.py
+  chmod 0700 /etc/letsencrypt/acme-dns-auth.py
+
+  echo " ------ Running 1 time set up for certbot - be prepared to set a DNS entry  ------ "
+  certbot certonly --manual --manual-auth-hook /etc/letsencrypt/acme-dns-auth.py \
+     --preferred-challenges dns --debug-challenges                               \
+     -d "${DOMAIN}" -d \*."${DOMAIN}"
+fi
+# always restart in case it was updated above
+systemctl restart caddy
+echo "   DONE! "
 
 echo ""
 echo " ------ Adding users... ------ "
@@ -93,8 +119,13 @@ echo ""
 cp ./press_to_exit.sh /bin/press_to_exit.sh
 sleep 1
 for i in "${VALID_USERS[@]}"; do
-  useradd -m -d /home/$i -s /bin/press_to_exit.sh $i
+  if id "$1" &>/dev/null; then
+      echo "${i} user already exists"
+  else
+      useradd -m -d /home/$i -s /bin/press_to_exit.sh $i
+  fi
 done
+echo "   DONE! "
 
 echo ""
 echo " ------ Setting MOTD... ------ "
@@ -102,73 +133,70 @@ echo ""
 sudo chmod -x /etc/update-motd.d/*
 cp motd /etc/update-motd.d/02-ssh-tunnel-info
 sudo chmod +x /etc/update-motd.d/02-ssh-tunnel-info
+echo "   DONE! "
 
 echo ""
 echo " ------ Adding SSH keys for users and setting file perms. This may take a while... ------ "
 echo ""
 for i in "${VALID_USERS[@]}"; do
+
   mkdir -p /home/$i/.ssh
   touch /home/$i/.ssh/authorized_keys
   chown $i:$i /home/$i/.ssh
   chown $i:$i /home/$i/.ssh/authorized_keys
   chmod 700 /home/$i/.ssh
   chmod 600 /home/$i/.ssh/authorized_keys
-  curl -s https://github.com/$i.keys -o /home/$i/.ssh/authorized_keys
+  # todo uncomment
+#  curl -s https://github.com/$i.keys -o /home/$i/.ssh/authorized_keys
 done
+echo "   DONE! "
 
 echo ""
-echo "Adding apache vhost files..."
+echo " ------ Adding caddy vhost files for each user...  ------ "
 echo ""
+rm /etc/caddy/sites-enabled/*
 for i in "${VALID_USERS[@]}"; do
   rand=`shuf -i1000-5000 -n1`
-  FQDNconf="${i}.${DOMAIN}.conf"
-  FQDN_ssl_conf="${i}-ssl.${DOMAIN}.conf"
+  FQDNconf="${i}-${DOMAIN}.conf"
 
-  cp ./apache.conf /etc/apache2/sites-available/$FQDNconf
-  cp ./apache.ssl.conf /etc/apache2/sites-available/$FQDN_ssl_conf
-
-  rpl -q --encoding UTF-8  -q SUBDOMAIN $i /etc/apache2/sites-available/$FQDNconf
-  rpl -q  --encoding UTF-8  -q SUBDOMAIN $i /etc/apache2/sites-available/$FQDN_ssl_conf
-
-  rpl  -q --encoding UTF-8  -q DOMAIN $DOMAIN /etc/apache2/sites-available/$FQDNconf
-  rpl  -q --encoding UTF-8  -q DOMAIN $DOMAIN /etc/apache2/sites-available/$FQDN_ssl_conf
-
-  rpl  -q --encoding UTF-8  -q PORT $rand /etc/apache2/sites-available/$FQDNconf
-  rpl  -q --encoding UTF-8  -q PORT $rand /etc/apache2/sites-available/$FQDN_ssl_conf
-
-  a2ensite $FQDNconf $FQDN_ssl_conf
+  echo "
+  ${i}.${DOMAIN} {
+     reverse_proxy 127.0.0.1:${rand}
+  }
+  ${i}-ssl.${DOMAIN} {
+     reverse_proxy {
+        to https://127.0.0.1:${rand}
+        transport http {
+          tls
+          tls_insecure_skip_verify
+        }
+     }
+  }
+  " > /etc/caddy/sites-enabled/$FQDNconf
 done
+echo "   DONE! "
 
 echo ""
-echo " ------ Fetching certs from Let's Encrypt... ------ "
-echo ""
-for i in "${VALID_USERS[@]}"; do
-  FQDN="${i}.${DOMAIN}"
-  FQDN_ssl="${i}-ssl.${DOMAIN}"
-  sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL -d $FQDN,$FQDN_ssl
-done
-
-echo ""
-echo " ------ Creating last cert for bare $DOMAIN domain... ------ "
-echo ""
-cp ./base.apache.conf /etc/apache2/sites-available/${DOMAIN}.conf
-rpl -q --encoding UTF-8  -q DOMAIN $DOMAIN /etc/apache2/sites-available/${DOMAIN}.conf
-rpl -q --encoding UTF-8  -q EMAIL $EMAIL /etc/apache2/sites-available/${DOMAIN}.conf
-a2ensite ${DOMAIN}.conf default-ssl.conf
-sudo certbot  --apache   --non-interactive   --agree-tos   --email $EMAIL --domains $DOMAIN
-
-echo ""
-echo " ------ Configuring and Reloading apache... ------ "
+echo " ------  Adding caddy vhost for primary ${DOMAIN}...  ------ "
 echo ""
 
-a2enmod proxy proxy_ajp proxy_http rewrite deflate headers proxy_balancer proxy_connect proxy_html ssl
-a2enconf security
-systemctl reload apache2
-MAPPING_NOSSL=$(grep -ri -m1 'ProxyPassReverse' /etc/apache2/sites-available/*|grep -v '\-ssl\.'|cut -d/ -f5,8|cut -d: -f1,3|awk 'BEGIN{FS=OFS=":"}{print $2 FS  $1}'|sed -r 's/.conf//g'|sed -r 's/:/\t/g'| awk '{print "\t" $0}')
-MAPPING_SSL=$(grep -ri -m1 'ProxyPassReverse' /etc/apache2/sites-available/*-ssl\.*|cut -d/ -f5,8|cut -d: -f1,3|awk 'BEGIN{FS=OFS=":"}{print $2 FS  $1}'|sed -r 's/.conf//g'|sed -r 's/:/\t/g'| awk '{print "\t" $0}')
-SAMPLE_PORT=$(grep -ri -m1 'ProxyPassReverse' /etc/apache2/sites-available/*|cut -d/ -f5,8|cut -d: -f3|tail -n1)
-SAMPLE_HOST=$(grep -ri -m1 'ProxyPassReverse' /etc/apache2/sites-available/*|cut -d/ -f5,8|cut -d: -f1|sed 's/.conf//g'|tail -n1)
-SAMPLE_LOGIN=$(grep -ri -m1 'ProxyPassReverse' /etc/apache2/sites-available/*|cut -d/ -f5,8|cut -d: -f1|sed 's/.conf//g'|tail -n1|cut -d. -f1)
+echo "
+${DOMAIN} {
+  tls /etc/caddy/fullchain.pem /etc/caddy/privkey.pem
+  root * /var/www/html
+  file_server
+}
+" > /etc/caddy/sites-enabled/0000-${DOMAIN}.conf
+echo "   DONE! "
+
+
+exit
+
+echo ""
+echo " ------ Reloading Caddy and fetching Let's Encrypt certs... ------ "
+echo ""
+systemctl restart caddy
+echo "   DONE! "
 
 echo "
 <style>
