@@ -220,6 +220,14 @@ echo ""
 systemctl restart caddy
 echo "  ~~ DONE! "
 
+# grep ports and users out of config files
+MAPPING_NOSSL=$(grep -h USERINFO /etc/caddy/sites-enabled/*|cut -d' ' -f7,8 | awk '{print "\t" $0}')
+MAPPING_SSL=$(grep -h USERINFO /etc/caddy/sites-enabled/*|cut -d' ' -f7,8 | awk '{print "\t" $0}')
+
+SAMPLE_HOST=$(grep -h medic-tunnel.plip.com /etc/caddy/sites-enabled/*|grep http|tail -n1 |cut -f3 -d'/'|cut -f1 -d'{')
+SAMPLE_PORT=$(grep -h USERINFO /etc/caddy/sites-enabled/*|cut -d' ' -f7,8|tail -n1|cut -f2 -d' ')
+SAMPLE_LOGIN=$(grep -h USERINFO /etc/caddy/sites-enabled/*|cut -d' ' -f7,8|tail -n1|cut -f1 -d' ')
+
 # shellcheck disable=SC2140
 echo "
 <style>
