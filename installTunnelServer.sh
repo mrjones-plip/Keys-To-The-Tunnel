@@ -171,6 +171,7 @@ for i in "${VALID_USERS[@]}"; do
       transport http {
         tls
         tls_insecure_skip_verify
+      }
     }
   }
   " > /etc/caddy/sites-enabled/$FQDNconf
