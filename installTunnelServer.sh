@@ -160,9 +160,15 @@ for i in "${VALID_USERS[@]}"; do
   FQDNconf="${i}-${DOMAIN}.conf"
 
   echo "
+  http://${i}.${DOMAIN} {
+    redir https://{host}{uri}
+  }
   ${i}.${DOMAIN} {
     tls /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
     reverse_proxy 127.0.0.1:${rand}
+  }
+  http://${i}-ssl.${DOMAIN}{
+      redir https://{host}{uri}
   }
   ${i}-ssl.${DOMAIN} {
     tls  /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
@@ -183,6 +189,9 @@ echo " ------  Adding caddy vhost for primary ${DOMAIN}...  ------ "
 echo ""
 
 echo "
+http://${DOMAIN} {
+  redir https://{host}{uri}
+}
 ${DOMAIN} {
   tls /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
   root * /var/www/html
