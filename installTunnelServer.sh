@@ -50,11 +50,17 @@ echo " ------ Verifying users who have SSH keys on GH, this may take a while... 
 echo " "
 VALID_USERS=()
 for USER in $(cat user.txt); do
-  keys=$(curl -s /dev/stdout https://github.com/${USER}.keys)
-  if [[ ! -z "$keys" ]] && [[ $keys != "Not Found" ]]; then
-    VALID_USERS+=("$USER")
+
+  if [ -f /home/"$i"/.ssh/authorized_keys ]; then
+    keys=$(curl -s /dev/stdout https://github.com/${USER}.keys)
+    if [[ ! -z "$keys" ]] && [[ $keys != "Not Found" ]]; then
+      VALID_USERS+=("$USER")
+    else
+      echo " - Skipping $USER, no SSH key found"
+    fi
   else
-    echo " - Skipping $USER, no SSH key found"
+    VALID_USERS+=("$USER")
+    echo " - Skipping $USER, account and keys already exist locally"
   fi
 done
 echo "  ~~ DONE! "
@@ -84,7 +90,7 @@ read -n1 -s
 echo ""
 echo " ------ Updating OS and installing required software, this might take a while... ------ "
 echo ""
-apt -qq update&&apt -y -qqq dist-upgrade
+apt-get -qq update&&apt-get -y -qqq dist-upgrade
 if ! command -v "caddy" &>/dev/null; then
   sudo apt -qqq install -y debian-keyring debian-archive-keyring apt-transport-https libnss3-tools  snapd python3 python3-pip
   ln -s /usr/bin/python3 /usr/bin/python
@@ -104,6 +110,8 @@ if ! command -v "caddy" &>/dev/null; then
   mkdir -p /etc/letsencrypt/live/${DOMAIN}
   curl -so /etc/letsencrypt/acme-dns-auth.py https://raw.githubusercontent.com/joohoi/acme-dns-certbot-joohoi/master/acme-dns-auth.py
   chmod 0700 /etc/letsencrypt/acme-dns-auth.py
+  chmod -R 750 /etc/letsencrypt/
+  chgrp -R caddy /etc/letsencrypt/
 
   echo " ------ Running 1 time set up for certbot - be prepared to set a DNS entry  ------ "
   certbot certonly --manual --manual-auth-hook /etc/letsencrypt/acme-dns-auth.py \
@@ -120,7 +128,7 @@ echo ""
 cp ./press_to_exit.sh /bin/press_to_exit.sh
 sleep 1
 for i in "${VALID_USERS[@]}"; do
-  if id "$1" &>/dev/null; then
+  if id "$i" &>/dev/null; then
       echo "${i} user already exists"
   else
       useradd -m -d /home/$i -s /bin/press_to_exit.sh $i
@@ -140,46 +148,53 @@ echo ""
 echo " ------ Adding SSH keys for users and setting file perms. This may take a while... ------ "
 echo ""
 for i in "${VALID_USERS[@]}"; do
-
-  mkdir -p /home/$i/.ssh
-  touch /home/$i/.ssh/authorized_keys
-  chown $i:$i /home/$i/.ssh
-  chown $i:$i /home/$i/.ssh/authorized_keys
-  chmod 700 /home/$i/.ssh
-  chmod 600 /home/$i/.ssh/authorized_keys
-  curl -s https://github.com/$i.keys -o /home/$i/.ssh/authorized_keys
+  if [ ! -f /home/"$i"/.ssh/authorized_keys ]; then
+    mkdir -p /home/"$i"/.ssh
+    touch /home/"$i"/.ssh/authorized_keys
+    chown $i:$i /home/"$i"/.ssh
+    chown $i:$i /home/"$i"/.ssh/authorized_keys
+    chmod 700 /home/"$i"/.ssh
+    chmod 600 /home/"$i"/.ssh/authorized_keys
+    curl -s https://github.com/"$i".keys -o /home/"$i"/.ssh/authorized_keys
+  fi
 done
 echo "  ~~ DONE! "
 
 echo ""
-echo " ------ Adding caddy vhost files for each user...  ------ "
+echo " ------ Adding caddy vhost files for all! user...  ------ "
 echo ""
 for i in "${VALID_USERS[@]}"; do
-  rand=`shuf -i1000-5000 -n1`
   FQDNconf="${i}-${DOMAIN}.conf"
+  if [ ! -f /etc/caddy/sites-enabled/"$FQDNconf" ]; then
+    echo "writing $FQDNconf"
+    rand=`shuf -i1000-5000 -n1`
 
-  echo "
-  http://${i}.${DOMAIN} {
-    redir https://{host}{uri}
-  }
-  ${i}.${DOMAIN} {
-    tls /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
-    reverse_proxy 127.0.0.1:${rand}
-  }
-  http://${i}-ssl.${DOMAIN} {
+    echo "
+    # USERINFO ${i} ${rand}
+    http://${i}.${DOMAIN} {
       redir https://{host}{uri}
-  }
-  ${i}-ssl.${DOMAIN} {
-    tls  /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
-    reverse_proxy {
-      to https://192.168.68.1:444
-      transport http {
-        tls
-        tls_insecure_skip_verify
+    }
+    ${i}.${DOMAIN} {
+      tls /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
+      reverse_proxy 127.0.0.1:${rand}
+    }
+    http://${i}-ssl.${DOMAIN} {
+        redir https://{host}{uri}
+    }
+    ${i}-ssl.${DOMAIN} {
+      tls  /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
+      reverse_proxy {
+        to https://192.168.68.1:444
+        transport http {
+          tls
+          tls_insecure_skip_verify
+        }
       }
     }
-  }
-  " > /etc/caddy/sites-enabled/$FQDNconf
+    " > /etc/caddy/sites-enabled/"$FQDNconf"
+  else
+    echo "skipping $FQDNconf"
+  fi
 done
 echo "  ~~ DONE! "
 
@@ -196,7 +211,7 @@ ${DOMAIN} {
   root * /var/www/html
   file_server
 }
-" > /etc/caddy/sites-enabled/0000-${DOMAIN}.conf
+" > /etc/caddy/sites-enabled/0000-"${DOMAIN}".conf
 echo "  ~~ DONE! "
 
 echo ""
@@ -205,6 +220,7 @@ echo ""
 systemctl restart caddy
 echo "  ~~ DONE! "
 
+# shellcheck disable=SC2140
 echo "
 <style>
 * {
