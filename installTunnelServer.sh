@@ -191,9 +191,6 @@ ${DOMAIN} {
 " > /etc/caddy/sites-enabled/0000-${DOMAIN}.conf
 echo "   DONE! "
 
-
-exit
-
 echo ""
 echo " ------ Reloading Caddy and fetching Let's Encrypt certs... ------ "
 echo ""
