@@ -50,14 +50,14 @@ echo " ------ Verifying users who have SSH keys on GH, this may take a while... 
 echo " "
 VALID_USERS=()
 for USER in $(cat user.txt); do
-# todo - uncomment for release
-#  keys=$(curl -s /dev/stdout https://github.com/${USER}.keys)
-#  if [[ ! -z "$keys" ]] && [[ $keys != "Not Found" ]]; then
+  keys=$(curl -s /dev/stdout https://github.com/${USER}.keys)
+  if [[ ! -z "$keys" ]] && [[ $keys != "Not Found" ]]; then
     VALID_USERS+=("$USER")
-#  else
-#    echo " - Skipping $USER, no SSH key found"
-#  fi
+  else
+    echo " - Skipping $USER, no SSH key found"
+  fi
 done
+echo "  ~~ DONE! "
 
 echo " "
 echo "This script assumes:"
@@ -80,7 +80,7 @@ echo "Press any key to continue or \"ctrl + c\" to exit"
 echo ""
 read -n1 -s
 
-# install apache, rpl & certbot then enable mods
+# install caddy, rpl & certbot then enable mods
 echo ""
 echo " ------ Updating OS and installing required software, this might take a while... ------ "
 echo ""
@@ -112,7 +112,7 @@ if ! command -v "caddy" &>/dev/null; then
 fi
 # always restart in case it was updated above
 systemctl restart caddy
-echo "   DONE! "
+echo "  ~~ DONE! "
 
 echo ""
 echo " ------ Adding users... ------ "
@@ -126,7 +126,7 @@ for i in "${VALID_USERS[@]}"; do
       useradd -m -d /home/$i -s /bin/press_to_exit.sh $i
   fi
 done
-echo "   DONE! "
+echo "  ~~ DONE! "
 
 echo ""
 echo " ------ Setting MOTD... ------ "
@@ -134,7 +134,7 @@ echo ""
 sudo chmod -x /etc/update-motd.d/*
 cp motd /etc/update-motd.d/02-ssh-tunnel-info
 sudo chmod +x /etc/update-motd.d/02-ssh-tunnel-info
-echo "   DONE! "
+echo "  ~~ DONE! "
 
 echo ""
 echo " ------ Adding SSH keys for users and setting file perms. This may take a while... ------ "
@@ -147,10 +147,9 @@ for i in "${VALID_USERS[@]}"; do
   chown $i:$i /home/$i/.ssh/authorized_keys
   chmod 700 /home/$i/.ssh
   chmod 600 /home/$i/.ssh/authorized_keys
-  # todo uncomment
-#  curl -s https://github.com/$i.keys -o /home/$i/.ssh/authorized_keys
+  curl -s https://github.com/$i.keys -o /home/$i/.ssh/authorized_keys
 done
-echo "   DONE! "
+echo "  ~~ DONE! "
 
 echo ""
 echo " ------ Adding caddy vhost files for each user...  ------ "
@@ -167,7 +166,7 @@ for i in "${VALID_USERS[@]}"; do
     tls /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
     reverse_proxy 127.0.0.1:${rand}
   }
-  http://${i}-ssl.${DOMAIN}{
+  http://${i}-ssl.${DOMAIN} {
       redir https://{host}{uri}
   }
   ${i}-ssl.${DOMAIN} {
@@ -182,7 +181,7 @@ for i in "${VALID_USERS[@]}"; do
   }
   " > /etc/caddy/sites-enabled/$FQDNconf
 done
-echo "   DONE! "
+echo "  ~~ DONE! "
 
 echo ""
 echo " ------  Adding caddy vhost for primary ${DOMAIN}...  ------ "
@@ -198,13 +197,13 @@ ${DOMAIN} {
   file_server
 }
 " > /etc/caddy/sites-enabled/0000-${DOMAIN}.conf
-echo "   DONE! "
+echo "  ~~ DONE! "
 
 echo ""
 echo " ------ Reloading Caddy and fetching Let's Encrypt certs... ------ "
 echo ""
 systemctl restart caddy
-echo "   DONE! "
+echo "  ~~ DONE! "
 
 echo "
 <style>
@@ -240,7 +239,7 @@ example:
 
 note:
 
-    Apache is configured on the http hosts to speak http to your localhost
+    Caddy is configured on the http hosts to speak http to your localhost
     server. Conversely, it is configured to speak https on the https hosts.
     If you mix these up it will try and speak https to http (or vise versa)
     and it will fail.
@@ -265,7 +264,7 @@ echo ""
 echo "${MAPPING_SSL}"
 
 echo ""
-echo "All this was saved to /var/www/html/index.html which is found on https://${DOMAIN}"
+echo "All this was saved to /var/www/html/index.html can be seen at https://${DOMAIN}"
 echo ""
 
 echo " ------ All done - enjoy! ------ "
