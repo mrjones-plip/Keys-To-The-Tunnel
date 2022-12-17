@@ -87,6 +87,7 @@ echo ""
 apt -qq update&&apt -y -qqq dist-upgrade
 if ! command -v "caddy" &>/dev/null; then
   sudo apt -qqq install -y debian-keyring debian-archive-keyring apt-transport-https libnss3-tools  snapd python3 python3-pip
+  ln -s /usr/bin/python3 /usr/bin/python
   python3 -m pip install requests
   sudo snap install core
   sudo snap refresh core
@@ -100,7 +101,7 @@ if ! command -v "caddy" &>/dev/null; then
   echo "import sites-enabled/*" >> /etc/caddy/Caddyfile
   mkdir /etc/caddy/sites-enabled
   mkdir -p /var/www/html
-  mkdir -p /etc/letsencrypt/
+  mkdir -p /etc/letsencrypt/live/${DOMAIN}
   curl -so /etc/letsencrypt/acme-dns-auth.py https://raw.githubusercontent.com/joohoi/acme-dns-certbot-joohoi/master/acme-dns-auth.py
   chmod 0700 /etc/letsencrypt/acme-dns-auth.py
 
@@ -154,23 +155,23 @@ echo "   DONE! "
 echo ""
 echo " ------ Adding caddy vhost files for each user...  ------ "
 echo ""
-rm /etc/caddy/sites-enabled/*
 for i in "${VALID_USERS[@]}"; do
   rand=`shuf -i1000-5000 -n1`
   FQDNconf="${i}-${DOMAIN}.conf"
 
   echo "
   ${i}.${DOMAIN} {
-     reverse_proxy 127.0.0.1:${rand}
+    tls /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
+    reverse_proxy 127.0.0.1:${rand}
   }
   ${i}-ssl.${DOMAIN} {
-     reverse_proxy {
-        to https://127.0.0.1:${rand}
-        transport http {
-          tls
-          tls_insecure_skip_verify
-        }
-     }
+    tls  /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
+    reverse_proxy {
+      to https://192.168.68.1:444
+      transport http {
+        tls
+        tls_insecure_skip_verify
+    }
   }
   " > /etc/caddy/sites-enabled/$FQDNconf
 done
@@ -182,7 +183,7 @@ echo ""
 
 echo "
 ${DOMAIN} {
-  tls /etc/caddy/fullchain.pem /etc/caddy/privkey.pem
+  tls /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem
   root * /var/www/html
   file_server
 }
