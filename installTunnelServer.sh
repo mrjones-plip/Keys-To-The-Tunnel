@@ -117,6 +117,12 @@ if ! command -v "caddy" &>/dev/null; then
   certbot certonly --manual --manual-auth-hook /etc/letsencrypt/acme-dns-auth.py \
      --preferred-challenges dns --debug-challenges                               \
      -d "${DOMAIN}" -d \*."${DOMAIN}"
+
+echo "
+#!/bin/bash
+echo '${DOMAIN}'
+" > /var/www/html/say_my_name.sh
+  chmod +x /var/www/html/say_my_name.sh
 fi
 # always restart in case it was updated above
 systemctl restart caddy
