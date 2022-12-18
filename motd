@@ -37,3 +37,5 @@ echo
 hostname=$(/var/www/html/say_my_name.sh)
 echo "HTTP   -->     \033[4;32mhttps://$(logname).${hostname}\033[0m"
 echo "HTTPS  --> \033[4;32mhttps://$(logname)-ssl.${hostname}\033[0m"
+echo
+echo
