@@ -30,9 +30,9 @@ echo
 echo
 printf "%s (%s %s %s)\n" "$DISTRIB_DESCRIPTION" "$(uname -o)" "$(uname -r)" "$(uname -m)"
 echo
-echo "Connected to Keys-To-The-Tunnel"
+echo "Successfully connected to Keys-To-The-Tunnel!"
 echo
-echo "Press 'Enter' to exit"
+echo "Press 'Enter' to disconnect the SSH tunnel"
 echo
 hostname=$(/var/www/html/say_my_name.sh)
 echo "HTTP   -->     \033[4;32mhttps://$(logname).${hostname}\033[0m"
