@@ -34,7 +34,7 @@ echo "Successfully connected to Keys-To-The-Tunnel!"
 echo
 echo "Press 'Enter' to disconnect the SSH tunnel"
 echo
-hostname=$(/var/www/html/say_my_name.sh)
+hostname=$(cat /var/www/html/domain.txt)
 echo "HTTP   -->     \033[4;32mhttps://$(logname).${hostname}\033[0m"
 echo "HTTPS  --> \033[4;32mhttps://$(logname)-ssl.${hostname}\033[0m"
 echo

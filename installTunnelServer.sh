@@ -90,8 +90,8 @@ read -n1 -s
 echo
 echo " ------ Updating OS and installing required software, this might take a while... ------ "
 echo
-apt-get -qq update&&apt-get -y -qqq dist-upgrade
 if ! command -v "caddy" &>/dev/null; then
+  apt-get -qq update&&apt-get -y -qqq dist-upgrade
   sudo apt -qqq install -y debian-keyring debian-archive-keyring apt-transport-https libnss3-tools \
     snapd python3 python3-pip rpl
   ln -s /usr/bin/python3 /usr/bin/python
@@ -105,7 +105,10 @@ if ! command -v "caddy" &>/dev/null; then
   sudo apt -qqq install caddy
   systemctl start caddy
   systemctl enable caddy
-  echo "import sites-enabled/*" >> /etc/caddy/Caddyfile
+  isInFile=$(grep -c "sites-enabled" /etc/caddy/Caddyfile)
+  if [ $isInFile -eq 0 ]; then
+    echo "import sites-enabled/*" >> /etc/caddy/Caddyfile
+  fi
   mkdir /etc/caddy/sites-enabled
   mkdir -p /var/www/html
   mkdir -p /etc/letsencrypt/live/${DOMAIN}
@@ -114,16 +117,13 @@ if ! command -v "caddy" &>/dev/null; then
   chmod -R 750 /etc/letsencrypt/
   chgrp -R caddy /etc/letsencrypt/
 
+  echo "${DOMAIN}" > /var/www/html/domain.txt
+
   echo " ------ Running 1 time set up for certbot - be prepared to set a DNS entry  ------ "
   certbot certonly --manual --manual-auth-hook /etc/letsencrypt/acme-dns-auth.py \
      --preferred-challenges dns --debug-challenges                               \
      -d "${DOMAIN}" -d \*."${DOMAIN}"
 
-echo "
-#!/bin/bash
-echo '${DOMAIN}'
-" > /var/www/html/say_my_name.sh
-  chmod +x /var/www/html/say_my_name.sh
 fi
 # always restart in case it was updated above
 systemctl restart caddy
@@ -232,19 +232,20 @@ echo " ------  Compiling final HTML for base website...  ------ "
 echo
 cp ./index.html ./kttt-logo.svg ./jquery-3.6.2.min.js /var/www/html/
 
-All_USERS_PORT=$(grep -h USERINFO /etc/caddy/sites-enabled/*|cut -d' ' -f7,8)
+All_USERS_PORT=$(grep -h USERINFO /etc/caddy/sites-enabled/*|cut -d' ' -f7,8 | sed 's/ /,/g')
 PORT_HANDLE_HTML=''
-for user_port in "${All_USERS_PORT[@]}"; do
-  handle=$(echo $user_port | cut -f1 -d' ')
-  port=$(echo $user_port | cut -f2 -d' ')
-  PORT_HANDLE_HTML="${PORT_HANDLE_HTML}<option port=\"${port}\">${handle}</option>\n"
+# shellcheck disable=SC2231
+for user_port in $All_USERS_PORT[@]; do
+  handle=$(echo $user_port | cut -f1 -d',')
+  port=$(echo $user_port | cut -f2 -d',' | sed 's/\[//g' | sed 's/\]//g' | sed 's/@//g')
+  PORT_HANDLE_HTML="${PORT_HANDLE_HTML}\n                                <option port=\"${port}\">${handle}</option>"
 done
 rpl -q --encoding UTF-8 -q PUT_PORT_HANDLE_HERE "$PORT_HANDLE_HTML" /var/www/html/index.html
 rpl -q --encoding UTF-8 -q PUT_DOMAIN_HERE "$DOMAIN" /var/www/html/index.html
 
 if [ -f "./logo.svg" ]; then
   cp ./logo.svg /var/www/html/
-  rpl -q --encoding UTF-8 -q BRANDED_LOGO_HERE "<img alt="logo provided by kttt host" id=\"logo\" src=\"./logo.svg\" />" /var/www/html/index.html
+  rpl -q --encoding UTF-8 -q BRANDED_LOGO_HERE "<img alt=\"logo provided by kttt host\" id=\"logo\" src=\"./logo.svg\" />" /var/www/html/index.html
 else
   rpl -q --encoding UTF-8 -q BRANDED_LOGO_HERE "" /var/www/html/index.html
 fi
