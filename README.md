@@ -1,8 +1,18 @@
 #  Keys-To-The-Tunnel
- 
+
 ## Intro
 
-Keys-To-The-Tunnel is for when you have a lot of GitHub Developers who have added their SSH key to GitHub (e.g. [here's mine](https://github.com/mrjones-plip.keys)) and they also are doing local development of apps that they either need to share with others via the internet or they need valid TLS certificates to test with, or both!
+Keys-To-The-Tunnel (KTTT) is for when you have a lot of GitHub Developers who have added their SSH key to GitHub (e.g. [here's mine](https://github.com/mrjones-plip.keys)) and they also are doing local development of apps that they either need to share with others via the internet or they need valid TLS certificates to test with, or both!
+
+Here's a 45 second video showing these steps being taken:
+
+1. Make a minor edit to an app running on `localhost` on port `80`
+1. Load the app on `http://localhost`
+1. Use the KTTT web GUI to get the SSH command to run
+1. Run the SSH command
+1. Connect to public URL exposing `localhost` over TLS
+
+https://user-images.githubusercontent.com/8253488/208363945-49b4ce78-798d-4159-bf54-5804683ca8ac.mp4
 
 Given a list of GitHub users and a `DOMAIN`, the script will give each user:
 1. A login 
@@ -78,8 +88,7 @@ And then in a browser they could go to `https://alligator-lovely-ssl.tunnel.doma
 
 ## To do
 
-- [ ] check for Nth run to not create users that already exist etc
-- [ ] maybe check for Ubuntu?
-- [ ] consolidate certbot calls with "-d DOMAIN" via SAN to reduce Let's Encrypt API calls?
+- [X] check for Nth run to not create users that already exist etc
+- [X] consolidate certbot calls with "-d DOMAIN" via SAN to reduce Let's Encrypt API calls?
 - [ ] cache SSH keys on first validation to avoid subsequent API calls to GitHub to get keys again
-- [ ] add redirect for bare host 80 -> 443 with HSTS, maybe do vhost instead of using default site confs?
+- [X] add redirect for bare host 80 -> 443 with HSTS, maybe do vhost instead of using default site confs?

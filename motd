@@ -27,9 +27,15 @@ if [ -z "$DISTRIB_DESCRIPTION" ] && [ -x /usr/bin/lsb_release ]; then
 fi
 
 echo
-echo "Connected to SSH tunnel server"
 echo
 printf "%s (%s %s %s)\n" "$DISTRIB_DESCRIPTION" "$(uname -o)" "$(uname -r)" "$(uname -m)"
 echo
-echo "Press 'ctrl + c' to exit"
+echo "Successfully connected to Keys-To-The-Tunnel!"
+echo
+echo "Press 'Enter' to disconnect the SSH tunnel"
+echo
+hostname=$(cat /var/www/html/domain.txt)
+echo "HTTP   -->     \033[4;32mhttps://$(logname).${hostname}\033[0m"
+echo "HTTPS  --> \033[4;32mhttps://$(logname)-ssl.${hostname}\033[0m"
+echo
 echo

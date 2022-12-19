@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Keys-to-the-tunnel</title>
+	<script src="jquery-3.6.2.min.js"></script>
+</head>
+<body>
+
+	<div>
+		<!-- hello pedantic HTMLists!  I'm using <center> and I don't care it's deprecated ;) -->
+		<center>
+			<img id="kttt-logo" src='./kttt-logo.svg' alt="Keys-To-The-Tunnel Logo (comically large key being put into tunnel)">
+			<h1>Keys-To-The-Tunnel</h1>
+		</center>
+		<div id="intro">
+			<p>
+				Hello!
+			</p>
+
+			<p>
+				Keys-To-The-Tunnel is an easy way to expose a locally
+				running web app you're developing to the Internet. Specifically,
+				it gives a public URL with a valid TLS certificate that you can share
+				with someone and they can see what you're up to.
+			</p>
+
+			<p>
+				Answer these three questions and we'll give you the command to run
+				locally and the public URL to access your app:
+			</p>
+		</div>
+		<form>
+			<label class="inputs handle" for="handle">1. Choose your GitHub Username:</label>
+			<select class="inputs handle" id="handle">
+				<option port=""></option>
+PUT_PORT_HANDLE_HERE
+			</select>
+
+			<label class="inputs port  grey" for="port">2.What port is your app running on locally?</label>
+			<input class="inputs port"  type="number" step="1" min="1" max="65000" id="port"  disabled="disabled" required />
+
+			<label class="inputs http_https grey" for="http_https">3. Is your local app using <code>http</code> or <code>https</code>?</label>
+			<select class="inputs http_https" id="http_https" disabled="disabled" required>
+				<option port=""></option>
+				<option >http</option>
+				<option >https</option>
+			</select>
+		</form>
+
+		<div class="result grey" id="result_command">
+			First, run this command (click to copy): <span id="copied">Copied!</span><br/> <code id="final_command"></code>
+		</div>
+		<div class="result grey" id="result_url">
+			Then go to this URL:<br/> <code id="final_url"></code>
+		</div>
+		<center>
+			<a id="link" href=https://github.com/mrjones-plip/Keys-To-The-Tunnel>Keys-To-The-Tunnel @ GitHub</a>
+			BRANDED_LOGO_HERE
+		</center>
+	</div>
+
+	<script type="application/javascript">
+		const domain = 'PUT_DOMAIN_HERE';
+		let port = undefined;
+		let server_port = undefined;
+		let http_https = undefined;
+		let handle = undefined;
+		populate_results(handle, port, server_port, http_https);
+
+		function populate_results(handle, dev_port, server_port, http_https){
+			if(handle === undefined || dev_port === undefined || server_port === undefined || http_https === undefined){
+				return reset_results();
+			}
+			$('.result').removeClass('grey');
+			let final_url;
+			if (http_https === 'https'){
+				final_url = 'https://' + handle + '-ssl' + '.' +domain;
+			} else {
+				final_url = 'https://' + handle + '.' + domain;
+			}
+			$('#final_url').html('<a href="' + final_url + '">' + final_url + '</a>');
+			$('#final_command').addClass('cursor').html('ssh -T -R '+ server_port + ':127.0.0.1:'
+					+ dev_port + ' ' + handle + '@' + domain);
+			$( "#final_command" ).click(function() {
+				navigator.clipboard.writeText($( "#final_command" ).html());
+				$('#copied').fadeIn('fast').fadeOut(3000);
+			});
+		}
+		function reset_results(){
+			$('.result').addClass('grey');
+			$('#final_url').html('<i>...fill out form above...</i>');
+			$('#final_command').html('<i>...fill out form above...</i>').removeClass('cursor').off();
+		}
+
+		$('#handle').change(function() {
+			if (this.value !== '') {
+				handle = this.value;
+				server_port = $(this).find("option:selected").attr('port');
+				$('.port').removeClass('grey')
+				$("#port").attr('disabled', false);
+			} else {
+				handle = undefined;
+				$('.http_https').addClass('grey')
+				$("#http_https").attr('disabled', true);
+				$('.port').addClass('grey')
+				$("#port").attr('disabled', true);
+			}
+			populate_results(handle, port, server_port, http_https);
+		});
+		$('#port').change(function() {
+			if (this.value !== '') {
+				port = this.value
+				$('.http_https').removeClass('grey')
+				$("#http_https").attr('disabled', false);
+			} else {
+				$('.http_https').addClass('grey')
+				$("#http_https").attr('disabled', true);
+				port = undefined;
+			}
+			populate_results(handle, port, server_port, http_https);
+		});
+		$('#http_https').change(function() {
+			if (this.value !== '') {
+				http_https = this.value;
+			} else {
+				http_https = undefined;
+			}
+			populate_results(handle, port, server_port, http_https);
+		});
+	</script>
+	<style>
+		#copied {
+			display: none;
+			color: red;
+		}
+		.cursor {
+			cursor: pointer;
+		}
+		#http_https {
+			margin-bottom: 20px;
+		}
+		#kttt-logo {
+			padding-top: 20px;
+			width: 20%;
+		}
+		h1 {
+			width: 60%;
+			padding-bottom: 20px;
+			color: #6d6d6d;
+		}
+		body,  h1 {
+			margin : 0 auto;
+			font-family: sans-serif;
+		}
+		body, #intro {
+			width: 600px;
+			text-align: left;
+		}
+		label, input, select {
+			display: block;
+			text-align: left;
+			width: 60%;
+		}
+		.result {
+			text-align: left;
+			font-size: larger;
+		}
+		label, .result {
+			padding-top:  20px;
+		}
+		#logo {
+			width: 20%;
+			display: block;
+		}
+		#link {
+			margin: 40px 0 40px;
+			display: block;
+		}
+		.grey {
+			color: lightgray;
+		}
+	</style>
+
+</body>
+</html>
