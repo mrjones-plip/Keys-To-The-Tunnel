@@ -2,9 +2,9 @@
 
 ## Intro
 
-Keys-To-The-Tunnel (KTTT) is for when you have a lot of GitHub Developers who have added their SSH key to GitHub (e.g. [here's mine](https://github.com/mrjones-plip.keys)) and they also are doing local development of apps that they either need to share with others via the internet or they need valid TLS certificates to test with, or both!
+Keys-To-The-Tunnel (KTTT) is for when you have a lot of GitHub Developers who have added their SSH key to GitHub (e.g. [here's mine](https://github.com/mrjones-plip.keys)) and they also are doing local development of apps that they either need to share with others via the internet or they need valid TLS certificates to test with, or both! 
 
-Here's a 45 second video showing these steps being taken:
+Check out [this blog post for info](https://blog.plip.com/2022/12/19/keys-to-the-tunnel-1-1-0-released/), and here's a 45 second video showing these steps being taken:
 
 1. Make a minor edit to an app running on `localhost` on port `80`
 1. Load the app on `http://localhost`
