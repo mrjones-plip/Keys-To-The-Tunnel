@@ -19,7 +19,7 @@ Given a list of GitHub users and a `DOMAIN`, the script will give each user:
 1. GitHub SSH key(s) put in `~/.ssh/authorized_keys`  
 1. Only allow SSH tunnels, no shells
 1. 2 vhosts for `http` and `https` localhost. GitHub name is a subdomain
-1. Valid SSL certificates from Let's Encrypt
+1. Valid TLS certificates from Let's Encrypt
 1. Instructions saved in `DOMAIN`
 
 This script is [hosted on GitHub](https://github.com/mrjones-plip/mrjones-medic-scratch/tree/main/SshTunnelServer).
@@ -84,7 +84,7 @@ If a user has a server running on `https://localhost:1234`, they would run:
 
 `ssh -T -R 4555:127.0.0.1:1234 alligator-lovely@tunnel.domain.com`
 
-And then in a browser they could go to `https://alligator-lovely-ssl.tunnel.domain.com` - note extra `-ssl` in URL! This ensures the proxy server speaks SSL to your localhost.
+And then in a browser they could go to `https://alligator-lovely-ssl.tunnel.domain.com` - note extra `-ssl` in URL! This ensures the proxy server speaks TLS to your localhost.
 
 ## To do
 
